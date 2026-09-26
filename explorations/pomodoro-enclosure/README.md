@@ -38,6 +38,21 @@ M2 铜柱孔距 72.00 × 48.50，按键间距 11.00 / 8.50 / 8.50。板子竖装
 | 双面泡棉胶 | `双面泡棉胶 3M` | 固定电池和喇叭 |
 | 小喇叭 | 先看板子包装里有没有；没有就搜 `8Ω 1W 小喇叭 MX1.25` | 买前对照板子上 SPK 插座的规格 |
 
+### 在美国采购（Amazon 搜索关键词）
+
+| 零件 | 搜索关键词 | 说明 |
+|---|---|---|
+| 哑光 PLA | `Polymaker Matte PLA` / `Bambu Lab PLA Matte` / `Elegoo Matte PLA` | 黑色选 Charcoal Black，白色选 Cotton White / Ivory White |
+| 锂电池 | `3.7V lipo battery MX1.25 2 pin` | ⚠️ Adafruit 等美国常见锂电池多为 **JST-PH 2.0** 插头，插不进 MX1.25；需要买 MX1.25 的，或另买 `MX1.25 to JST PH adapter` |
+| 90° USB-C 延长线 | `USB C 90 degree panel mount extension male to female` | 10–15cm |
+| M2 沉头螺丝 | `M2 flat head countersunk machine screw assortment` | 用 M2×5；精确规格也可在 McMaster-Carr 买 |
+| M2 沉头自攻螺丝 | `M2 countersunk self tapping screws` | 用 M2×6 |
+| 脚垫 | `self adhesive silicone bumper feet 10mm` | |
+| 双面泡棉胶 | `3M double sided foam mounting tape` | |
+| 小喇叭 | `8 ohm 1W mini speaker MX1.25` | 先看板子包装里有没有 |
+
+美国在线打印服务：Craftcloud、JLC3DP（寄美国）、Xometry。
+
 不想自己打印：把 STL 上传到嘉立创 3D 打印等在线服务，选黑色树脂或黑色尼龙。
 
 ## 组装顺序

@@ -161,7 +161,10 @@ module button_cap() {
 module buttons() { button_cap(); translate([10, 0, 0]) button_cap(); }
 
 // ---------------- Views ----------------
-ink = [0.10, 0.10, 0.11]; ink2 = [0.16, 0.16, 0.17]; tomato = [0.95, 0.33, 0.18];
+shade  = "black";   // render colour: black | white
+ink    = shade == "white" ? [0.93, 0.93, 0.91] : [0.10, 0.10, 0.11];
+ink2   = shade == "white" ? [0.86, 0.86, 0.84] : [0.16, 0.16, 0.17];
+tomato = [0.95, 0.33, 0.18];
 module glass() {
   color([0.02, 0.02, 0.025]) rr_xz(gx, gz, board_w, board_h, glass_r, lip-0.02, 1.1);
   color([0.95, 0.95, 0.93]) translate([gx+6.02, lip-0.05, gz+9.5]) cube([48.96, 0.04, 73.44]);   // lit screen
