@@ -161,9 +161,14 @@ module button_cap() {
 module buttons() { button_cap(); translate([10, 0, 0]) button_cap(); }
 
 // ---------------- Views ----------------
-shade  = "black";   // render colour: black | white
-ink    = shade == "white" ? [0.93, 0.93, 0.91] : [0.10, 0.10, 0.11];
-ink2   = shade == "white" ? [0.86, 0.86, 0.84] : [0.16, 0.16, 0.17];
+shade      = "black";   // render colour of everything: black | white
+slab_shade = shade;     // override per part for two-tone renders
+foot_shade = shade;
+function c1(sh) = sh == "white" ? [0.93, 0.93, 0.91] : [0.10, 0.10, 0.11];
+function c2(sh) = sh == "white" ? [0.86, 0.86, 0.84] : [0.16, 0.16, 0.17];
+ink    = c1(slab_shade);
+ink2   = c2(slab_shade);
+foot_c = c1(foot_shade);
 tomato = [0.95, 0.33, 0.18];
 module glass() {
   color([0.02, 0.02, 0.025]) rr_xz(gx, gz, board_w, board_h, glass_r, lip-0.02, 1.1);
@@ -185,8 +190,8 @@ if (part == "cover")   cover();
 if (part == "foot")    foot();
 if (part == "plate")   plate();
 if (part == "buttons") buttons();
-if (part == "assembly") { color(ink) foot(); slab_placed() slab_assembly(); }
+if (part == "assembly") { color(foot_c) foot(); slab_placed() slab_assembly(); }
 if (part == "exploded") {
-  color(ink) foot(); color(ink2) translate([0, 0, -25]) plate();
+  color(foot_c) foot(); color(c2(foot_shade)) translate([0, 0, -25]) plate();
   slab_placed() translate([0, -10, 45]) slab_assembly(18);
 }
