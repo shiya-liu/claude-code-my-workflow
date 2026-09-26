@@ -153,10 +153,11 @@ module plate() {
 }
 
 // ---------------- Buttons ----------------
+// flange at the inner end: it presses the switch and stops the cap falling out; prints flange-down
 module button_cap() {
   inside = clr + btn_inset - 0.3;
+  cylinder(d = 5.0, h = 0.9);
   cylinder(d = 3.2, h = inside + ws + 0.8, $fn = 32);
-  translate([0, 0, inside - 0.9]) cylinder(d = 5.6, h = 0.9);
 }
 module buttons() { button_cap(); translate([10, 0, 0]) button_cap(); }
 
@@ -185,6 +186,19 @@ module slab_assembly(e = 0) {
   color(ink2) translate([ws+0.1, SD - cover_t + e, ws+0.1]) rotate([90, 0, 0]) mirror([0, 0, 1]) cover();
 }
 
+// print-ready orientation (what the slicer should see)
+if (part == "shell_print") translate([0, SH, 0]) rotate([90, 0, 0]) shell();   // front face on the bed
+if (part == "foot_print")  translate([0, FD, FH]) rotate([180, 0, 0]) foot();  // top on the bed
+if (part == "plate_print") plate();
+if (part == "bed") {   // everything on one 250 x 220 bed (Prusa CORE One+)
+  color(ink) translate([5, 5+SH, 0]) rotate([90, 0, 0]) shell();
+  color(ink) translate([85, 5, 0]) translate([0, FD, FH]) rotate([180, 0, 0]) foot();
+  color(ink) translate([85, 75, 0]) plate();
+  color(ink) translate([170, 5, 0]) cover();
+  color(ink) translate([240, 115, 0]) button_cap();
+  color(tomato) translate([240, 125, 0]) button_cap();
+  %translate([0, 0, -0.5]) cube([250, 220, 0.5]);
+}
 if (part == "shell")   shell();
 if (part == "cover")   cover();
 if (part == "foot")    foot();
