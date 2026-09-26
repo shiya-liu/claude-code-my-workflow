@@ -1,71 +1,81 @@
-// Pomodoro desk enclosure for Waveshare ESP32-S3-Touch-LCD-3.5B
-// Style: "Ink & Paper" — matte black body, flush front bezel, one tomato-red PWR button.
+// Pomodoro desk enclosure — Waveshare ESP32-S3-Touch-LCD-3.5B
+// Style "Ink & Paper": matte black body, flush front bezel, one tomato-red PWR button.
+//
+// Board dimensions from the official Waveshare drawings (glass 92.44 x 61.00, R6,
+// active area 73.44 x 48.96 centred, total depth 11.50, M2 standoffs 72.00 x 48.50).
+// The board is used in PORTRAIT with the USB-C port at the bottom
+// (i.e. rotated 90° clockwise from Waveshare's front drawing) -> set display rotation to match.
 //
 // Parts (all print without supports):
-//   body    – tilted wedge housing, print standing on its flat bottom
-//   bezel   – thin front plate with screen window, print face-down
-//   buttons – PWR (red) and BOOT (black) push caps
-//
-// !!! Every value marked [MEASURE] is a placeholder until measured on the real board.
-// Usage:  openscad -D 'part="body"' -o body.stl pomodoro_enclosure.scad
+//   body     – tilted wedge housing, print standing on its flat bottom
+//   bezel    – front plate with screen window, print face-down
+//   carrier  – plate screwed to the board's 4 M2 standoffs, rests on the pocket ledge
+//   buttons  – PWR (red) + BOOT (black) push caps
+// Export:  openscad -D 'part="body"' -o body.stl pomodoro_enclosure.scad
 
-part = "assembly";            // assembly | body | bezel | buttons | exploded
+part = "assembly";   // assembly | exploded | body | bezel | carrier | buttons
 
-// ---------------- Board (all [MEASURE]) ----------------
-board_w   = 62.0;   // [MEASURE] PCB/LCD outline width, portrait (mm)
-board_h   = 94.0;   // [MEASURE] outline height, portrait
-board_t   = 12.0;   // [MEASURE] total thickness: glass front -> tallest part on back
-win_w     = 49.5;   // [MEASURE] visible screen area width
-win_h     = 74.0;   // [MEASURE] visible screen area height
-win_dx    = 0.0;    // [MEASURE] screen-area centre offset from board centre (+ = right)
-win_dy    = 0.0;    // [MEASURE] (+ = up)
+// ---------------- Board, portrait, front view (mm) ----------------
+// x from the glass LEFT edge, z from the glass BOTTOM edge, d = depth behind the glass front
+board_w  = 61.00;
+board_h  = 92.44;
+board_t  = 11.50;
+glass_r  = 6.00;
+win_w    = 48.96;   // active area
+win_h    = 73.44;
+standoff = [[6.25, 10.22], [54.75, 10.22], [6.25, 82.22], [54.75, 82.22]];  // M2, tips at d = 11.5
+usb_x    = 30.35;   // USB-C on the bottom edge
+usb_d    = 9.2;
+// right edge (tact switches point outward, ~3.6 mm inside the glass edge)
+pwr_z    = 21.22;
+rst_z    = 29.72;   // RESET -> paper-clip pinhole
+boot_z   = 38.22;
+btn_d    = 8.7;
+btn_inset= 3.6;
+sd_z     = 69.9;    // microSD slot, right edge (estimated from photo — check before printing)
+sd_d     = 8.4;
 
-// Openings. side: "left" | "right" | "top" | "bottom" (seen from the front, screen upright)
-// pos = centre distance from the board's left edge (top/bottom) or bottom edge (left/right)
-// depth = centre distance behind the glass front
-usb     = ["bottom", 31.0, 8.0, 10.0, 4.5];  // [MEASURE] side, pos, depth, width, height (USB-C)
-tf_slot = ["left",   20.0, 9.0, 13.0, 2.6];  // [MEASURE] microSD slot
-btn_pwr = ["right",  70.0, 8.5];             // [MEASURE] side, pos, depth
-btn_boot= ["right",  56.0, 8.5];             // [MEASURE]
-
-// ---------------- Battery ----------------
-bat = [34, 50, 10];  // [MEASURE] LiPo w x l x t (e.g. 103450 1S 2000 mAh)
-
-// ---------------- Enclosure ----------------
-tilt     = 15;    // screen leans back from vertical (deg)
-clr      = 0.3;   // board clearance per side
-side_m   = 4.5;   // face border left/right/top (outer edge -> board pocket)
-chin     = 12.0;  // face border under the screen
-bez      = 1.6;   // bezel thickness
-rim      = 1.2;   // body lip visible around bezel
-skirt_in = 1.8;   // bezel skirt position from outer edge
-skirt_t  = 1.0;   // bezel skirt thickness
-skirt_d  = 2.5;   // bezel skirt depth
-gclr     = 0.15;  // bezel skirt fit clearance
+// ---------------- Parts & fit ----------------
+bat      = [50, 34, 10];  // LiPo footprint used for the bay check (e.g. 103450)
+tilt     = 15;
+clr      = 0.3;
+side_m   = 4.5;    // face border left / right / top
+chin     = 16.0;   // face border under the glass
+bez      = 1.6;
+rim      = 1.2;
+skirt_in = 1.8;
+skirt_t  = 1.0;
+skirt_d  = 2.5;
+gclr     = 0.15;
+carrier_t= 1.6;
 wall     = 2.2;
-ledge    = 1.8;   // board rests on this ledge behind its edges
-base_d   = 64;    // footprint depth (front -> back)
-base_h   = 18;    // battery bay height
+ledge    = 2.5;
+base_d   = 74;
+base_h   = 18;
 floor_t  = 2.0;
-edge_r   = 1.2;   // outer edge rounding
-$fn = 40;
+edge_r   = 1.2;
+$fn = 48;
 
 // ---------------- Derived ----------------
-Wf = board_w + 2*clr + 2*side_m;         // face width
-Sf = board_h + 2*clr + side_m + chin;    // face length along slope
-Pd = bez + board_t + clr;                // pocket depth behind face
-Ds = Pd + wall + 4;                      // slab depth (4 mm cable space)
-bx0 = side_m + clr;                      // board origin in face frame
+Wf  = board_w + 2*clr + 2*side_m;
+Sf  = board_h + 2*clr + side_m + chin;
+Pd  = bez + board_t + carrier_t + clr;   // pocket depth
+Ds  = Pd + wall + 4;                     // slab depth
+bx0 = side_m + clr;                      // glass bottom-left corner in face frame
 bz0 = chin + clr;
-H  = Sf * cos(tilt);
-echo(str("Face ", Wf, " x ", Sf, " mm; overall ~", Wf, " W x ", base_d, " D x ", round(H*10)/10, " H"));
-echo(str("Battery bay height ", base_h - floor_t - wall, " (battery ", bat[2], ")"));
+H   = Sf * cos(tilt);
+by0 = (Pd + base_h*sin(tilt)) / cos(tilt);   // front of the base cavity (world y)
+echo(str("Outer ~ ", Wf, " W x ", base_d, " D x ", round(H*10)/10, " H mm"));
+echo(str("Battery bay ", Wf-2*wall, " x ", round((base_d-wall-by0)*10)/10, " x ", base_h-floor_t-wall,
+         " (battery ", bat[0], " x ", bat[1], " x ", bat[2], ")"));
 
-// face frame: x = across, y = into body, z = up the slope
+// face frame: x across, y into the body, z up the slope
 module face() rotate([-tilt, 0, 0]) children();
 
-module rbox(s, r) {  // box with rounded vertical corners (in its own frame)
-  hull() for (x = [r, s[0]-r], y = [r, s[1]-r]) translate([x, y, 0]) cylinder(r = r, h = s[2]);
+// rounded rectangle in the x/z plane, extruded along +y
+module rrect_xz(x, z, w, h, r, y0, d) {
+  translate([x, y0 + d, z]) rotate([90, 0, 0])
+    linear_extrude(d) offset(r) offset(-r) square([w, h]);
 }
 
 // ---------------- Body ----------------
@@ -74,7 +84,8 @@ module outer() {
     minkowski() {
       hull() {
         face() translate([edge_r, edge_r, edge_r]) cube([Wf-2*edge_r, Ds-2*edge_r, Sf-2*edge_r]);
-        translate([edge_r, edge_r, edge_r]) cube([Wf-2*edge_r, base_d-2*edge_r, base_h-2*edge_r]);
+        // base starts behind the tilted face so the face stays one flat plane
+        translate([edge_r, base_h*tan(tilt)+edge_r, edge_r]) cube([Wf-2*edge_r, base_d-base_h*tan(tilt)-2*edge_r, base_h-2*edge_r]);
       }
       sphere(r = edge_r, $fn = 16);
     }
@@ -83,10 +94,9 @@ module outer() {
 }
 
 module cavity() {
-  y0 = (Pd + base_h*sin(tilt)) / cos(tilt);    // keep base cavity behind the pocket
   hull() {
-    face() translate([bx0+ledge, Pd-0.01, bz0]) cube([board_w-2*ledge, Ds-wall-Pd, board_h-ledge]);
-    translate([wall, y0, floor_t]) cube([Wf-2*wall, base_d-wall-y0, base_h-floor_t-wall]);
+    face() rrect_xz(bx0+ledge, bz0+ledge, board_w-2*ledge, board_h-2*ledge, glass_r, Pd-0.01, Ds-wall-Pd);
+    translate([wall, by0, floor_t]) cube([Wf-2*wall, base_d-wall-by0, base_h-floor_t-wall]);
   }
 }
 
@@ -95,33 +105,19 @@ module face_cuts() {
     // bezel recess + skirt groove
     translate([rim, -1, rim]) cube([Wf-2*rim, bez+1, Sf-2*rim]);
     difference() {
-      translate([skirt_in, -1, skirt_in]) cube([Wf-2*skirt_in, bez+skirt_d+0.4+1, Sf-2*skirt_in]);
-      translate([skirt_in+skirt_t+2*gclr, -2, skirt_in+skirt_t+2*gclr])
-        cube([Wf-2*(skirt_in+skirt_t+2*gclr), bez+skirt_d+4, Sf-2*(skirt_in+skirt_t+2*gclr)]);
+      translate([skirt_in, -1, skirt_in]) cube([Wf-2*skirt_in, bez+skirt_d+1.4, Sf-2*skirt_in]);
+      g = skirt_in + skirt_t + 2*gclr;
+      translate([g, -2, g]) cube([Wf-2*g, bez+skirt_d+4, Sf-2*g]);
     }
-    // board pocket
-    translate([side_m, bez-0.01, chin]) cube([board_w+2*clr, board_t+clr+0.02, board_h+2*clr]);
-  }
-}
-
-// one rectangular opening through the wall on a given side of the board
-module side_cut(side, pos, depth, w, h, extra = 0) {
-  y = bez + depth;
-  face() {
-    if (side == "left")   translate([-1,               y-h/2, bz0+pos-w/2]) cube([side_m+2, h, w]);
-    if (side == "right")  translate([Wf-side_m-1,      y-h/2, bz0+pos-w/2]) cube([side_m+2, h, w]);
-    if (side == "top")    translate([bx0+pos-w/2,      y-h/2, bz0+board_h-1]) cube([w, h, side_m+clr+2]);
-    if (side == "bottom") translate([bx0+pos-w/2,      y-h/2, -extra]) cube([w, h, chin+1+extra]);
-  }
-}
-
-module button_hole(side, pos, depth) {
-  y = bez + depth;
-  face() {
-    xo = side == "left" ? -1 : Wf-side_m-1;
-    xc = side == "left" ? side_m-1.0 : Wf-side_m-0.01;   // counterbore on the inside
-    translate([xo, y, bz0+pos]) rotate([0, 90, 0]) cylinder(d = 3.6, h = side_m+2);
-    translate([side == "left" ? xc : xc-1.0, y, bz0+pos]) rotate([0, 90, 0]) cylinder(d = 6.0, h = 1.01);
+    // board + carrier pocket (glass outline, R6 corners)
+    rrect_xz(side_m, chin, board_w+2*clr, board_h+2*clr, glass_r+clr, bez-0.01, Pd-bez+0.02);
+    // USB-C: room for a 90° plug under the board, open to the battery bay
+    translate([bx0+usb_x-8, bez+3.5, bz0-6]) cube([16, 20-bez-3.5, 14]);
+    // right edge: PWR + BOOT caps, RESET pinhole, microSD slot
+    xr = Wf - side_m - 1;
+    for (zz = [pwr_z, boot_z]) translate([xr, bez+btn_d, bz0+zz]) rotate([0, 90, 0]) cylinder(d = 3.6, h = side_m+2);
+    translate([xr, bez+btn_d, bz0+rst_z]) rotate([0, 90, 0]) cylinder(d = 1.6, h = side_m+2, $fn = 16);
+    translate([xr, bez+sd_d-1.6, bz0+sd_z-7.25]) cube([side_m+2, 3.2, 14.5]);
   }
 }
 
@@ -130,77 +126,100 @@ module body() {
     outer();
     cavity();
     face_cuts();
-    // USB-C: side opening, or for a bottom port a channel into the bay + exit in the back wall
-    if (usb[0] == "bottom") {
-      side_cut("bottom", usb[1], usb[2], usb[3]+4, usb[4]+3, 0);
-      translate([Wf/2-6, base_d-wall-1, floor_t+1]) cube([12, wall+2, 7]);   // cable exit (back)
-    } else side_cut(usb[0], usb[1], usb[2], usb[3]+1.2, usb[4]+1.2);
-    side_cut(tf_slot[0], tf_slot[1], tf_slot[2], tf_slot[3]+1.5, tf_slot[4]+1.2);
-    button_hole(btn_pwr[0],  btn_pwr[1],  btn_pwr[2]);
-    button_hole(btn_boot[0], btn_boot[1], btn_boot[2]);
-    // speaker grille in the floor (sound bounces off the desk)
-    for (r = [0:3], a = [0:(r == 0 ? 0 : 360/(6*r)):359.9])
-      translate([Wf/2 + 3.2*r*cos(a), base_d-20 + 3.2*r*sin(a), -1]) cylinder(d = 1.8, h = floor_t+2, $fn = 12);
+    // rear port for a panel-mount USB-C extension (glue in)
+    translate([Wf/2-6.5, base_d-wall-1, floor_t+4]) cube([13, wall+2, 6.5]);
+    // speaker grille in the floor, behind the battery
+    for (r = [0:3], a = [0:(r == 0 ? 360 : 360/(6*r)):359.9])
+      translate([Wf/2 + 3.2*r*cos(a), base_d-16 + 3.2*r*sin(a), -1]) cylinder(d = 1.8, h = floor_t+2, $fn = 12);
     // rubber-foot recesses
     for (x = [9, Wf-9], y = [9, base_d-9]) translate([x, y, -0.01]) cylinder(d = 10.4, h = 0.8);
   }
 }
 
-// ---------------- Bezel (own frame, printed face-down: front at z = 0) ----------------
+// ---------------- Bezel (printed face-down: front at z = 0) ----------------
 module bezel() {
   o  = rim + gclr;
   bw = Wf - 2*o; bh = Sf - 2*o;
-  wx = bx0 + board_w/2 + win_dx - o;   // window centre in bezel coords
-  wy = bz0 + board_h/2 + win_dy - o;
-  s0 = skirt_in + gclr - o;            // skirt offset from bezel edge
+  wx = bx0 + board_w/2 - o;           // window centre (bezel coords)
+  wy = bz0 + board_h/2 - o;
+  ww = win_w + 1.0; wh = win_h + 1.0; // 0.5 mm margin so no pixels are hidden
+  s0 = skirt_in + gclr - o;
   difference() {
     union() {
-      rbox([bw, bh, bez], 0.6);
+      linear_extrude(bez) offset(0.6) offset(-0.6) square([bw, bh]);
       translate([s0, s0, bez-0.01]) difference() {
         cube([bw-2*s0, bh-2*s0, skirt_d]);
         translate([skirt_t, skirt_t, -1]) cube([bw-2*s0-2*skirt_t, bh-2*s0-2*skirt_t, skirt_d+2]);
       }
     }
-    // window with a 45° chamfer on the front edge
-    hull() {
-      translate([wx-win_w/2-0.8, wy-win_h/2-0.8, -0.01]) cube([win_w+1.6, win_h+1.6, 0.01]);
-      translate([wx-win_w/2, wy-win_h/2, 0.8]) cube([win_w, win_h, 0.01]);
+    hull() {  // window, 45° chamfer on the front edge
+      translate([wx-ww/2-0.8, wy-wh/2-0.8, -0.01]) cube([ww+1.6, wh+1.6, 0.01]);
+      translate([wx-ww/2, wy-wh/2, 0.8]) cube([ww, wh, 0.01]);
     }
-    translate([wx-win_w/2, wy-win_h/2, 0.5]) cube([win_w, win_h, bez+1]);
+    translate([wx-ww/2, wy-wh/2, 0.5]) cube([ww, wh, bez+1]);
+  }
+}
+
+// ---------------- Carrier (board-back plate, own frame: x/y = board x/z) ----------------
+module carrier() {
+  cw = board_w - 0.4; ch = board_h - 0.4;
+  translate([0.2, 0.2, 0]) difference() {
+    union() {
+      difference() {   // outer frame
+        linear_extrude(carrier_t) offset(glass_r-0.2) offset(-(glass_r-0.2)) square([cw, ch]);
+        translate([4, 4, -1]) cube([cw-8, ch-8, carrier_t+2]);
+      }
+      for (s = standoff) translate([s[0]-0.2, s[1]-0.2, 0]) {   // pads + ribs to the frame
+        cylinder(d = 7, h = carrier_t);
+        translate([s[0] < 30 ? -s[0] : 0, -1.5, 0]) cube([s[0] < 30 ? s[0] : cw-s[0]+0.2, 3, carrier_t]);
+      }
+    }
+    for (s = standoff) translate([s[0]-0.2, s[1]-0.2, -1]) cylinder(d = 2.4, h = carrier_t+2);
+    translate([usb_x-0.2-8, -1, -1]) cube([16, 5.5, carrier_t+2]);   // notch for the USB plug
   }
 }
 
 // ---------------- Button caps ----------------
+// stem: 0.8 outside + wall + reaches to ~0.3 mm from the switch; flange stays inside
 module button_cap() {
-  cylinder(d = 5.6, h = 0.9);                   // flange (inside, stops it falling out)
-  cylinder(d = 3.2, h = 0.9 + side_m - 1.0 + 0.8, $fn = 32);  // stem, sticks out 0.8 mm
+  inside = clr + btn_inset - 0.3;
+  cylinder(d = 3.2, h = inside + side_m + 0.8, $fn = 32);
+  translate([0, 0, inside - 0.9]) cylinder(d = 5.6, h = 0.9);
 }
-module buttons() { translate([0, 0, 0]) button_cap(); translate([10, 0, 0]) button_cap(); }
+module buttons() { button_cap(); translate([10, 0, 0]) button_cap(); }
 
 // ---------------- Views ----------------
-ink = [0.09, 0.09, 0.09]; paper = [0.96, 0.96, 0.95]; tomato = [0.95, 0.33, 0.18];
+ink = [0.10, 0.10, 0.10]; tomato = [0.95, 0.33, 0.18];
 
-module board_dummy() {
-  face() translate([bx0, bez, bz0]) {
-    color([0.12, 0.35, 0.2]) translate([0, 1.6, 0]) cube([board_w, board_t-1.6, board_h]);
-    color([0.02, 0.02, 0.03]) translate([board_w/2+win_dx-win_w/2, -0.01, board_h/2+win_dy-win_h/2])
-      cube([win_w, 1.7, win_h]);
+module board_dummy(dy = 0) {
+  face() translate([0, -dy, 0]) {
+    color([0.03, 0.03, 0.035]) rrect_xz(bx0, bz0, board_w, board_h, glass_r, bez, 1.1);        // glass
+    color([0.18, 0.18, 0.20]) translate([bx0+(board_w-win_w)/2, bez-0.02, bz0+(board_h-win_h)/2])
+      cube([win_w, 0.05, win_h]);                                                           // pixels
+    color([0.55, 0.56, 0.58]) rrect_xz(bx0+1, bz0+1, board_w-2, board_h-2, 4, bez+1.1, 4.8); // LCD frame
+    color([0.15, 0.35, 0.65]) translate([bx0+3.6, bez+5.9, bz0+6.4]) cube([board_w-7.2, 1.6, board_h-12.8]); // PCB
+    color([0.8, 0.65, 0.3]) for (s = standoff) translate([bx0+s[0], bez+7.5, bz0+s[1]]) rotate([-90, 0, 0]) cylinder(d = 3.5, h = 4);
   }
 }
 module bezel_placed(dy = 0) {
   o = rim + gclr;
   face() translate([o, bez - dy, o]) rotate([90, 0, 0]) mirror([0, 0, 1]) bezel();
 }
+module carrier_placed(dy = 0) {
+  face() translate([bx0, bez + board_t + carrier_t + dy, bz0]) rotate([90, 0, 0]) carrier();
+}
 module caps_placed(dx = 0) {
-  for (b = [btn_pwr, btn_boot]) {
-    xs = b[0] == "left" ? side_m - 1.0 - dx : Wf - side_m + 1.0 + dx;
-    color(b == btn_pwr ? tomato : ink) face()
-      translate([xs, bez + b[2], bz0 + b[1]]) rotate([0, b[0] == "left" ? -90 : 90, 0]) button_cap();
-  }
+  xs = Wf + 0.8 + dx;
+  for (zz = [pwr_z, boot_z]) color(zz == pwr_z ? tomato : ink) face()
+    translate([xs, bez+btn_d, bz0+zz]) rotate([0, -90, 0]) button_cap();
 }
 
 if (part == "body")    body();
 if (part == "bezel")   bezel();
+if (part == "carrier") carrier();
 if (part == "buttons") buttons();
 if (part == "assembly") { color(ink) body(); color(ink) bezel_placed(); caps_placed(); board_dummy(); }
-if (part == "exploded") { color(ink) body(); color(ink) bezel_placed(30); caps_placed(8); board_dummy(); }
+if (part == "exploded") {
+  color(ink) body(); color(ink) bezel_placed(70); caps_placed(12);
+  board_dummy(40); color([0.3, 0.3, 0.3]) carrier_placed(-22);
+}
