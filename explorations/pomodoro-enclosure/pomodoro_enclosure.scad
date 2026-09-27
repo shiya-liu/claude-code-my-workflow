@@ -21,6 +21,13 @@ part = "assembly";   // assembly | exploded | shell | cover | foot | plate | but
 board_w = 61.00;  board_h = 92.44;  board_t = 11.50;  glass_r = 6.00;
 standoff = [[6.25, 10.22], [54.75, 10.22], [6.25, 82.22], [54.75, 82.22]];
 usb_x  = 30.35;                   // bottom edge
+// 90° USB-C cable whose plug bends sideways (cable runs along the board's bottom edge).
+// Measured from a photo: plug body ~18 mm wide, reaching ~7 mm below the glass edge.
+// The channel is wide enough for the plug in either orientation (cable left or right).
+chan_x0 = 4;     // channel across the bottom, from the glass left edge ...
+chan_x1 = 57;    // ... to here
+chan_y  = 4.5;   // channel starts this far behind the glass front (keeps a clean front strip)
+chan_drop = 12;  // pocket depth below the slab in the foot
 pwr_z  = 21.22; rst_z = 29.72; boot_z = 38.22; btn_d = 8.7; btn_inset = 3.6;   // right edge
 sd_z   = 69.9;  sd_d = 8.4;       // right edge, estimated from photo — check before printing
 
@@ -87,6 +94,8 @@ module shell() {
     rr_xz(gx+overlap, gz+overlap, board_w-2*overlap, board_h-2*overlap, glass_r-overlap, 0, lip+1);
     // board + cover pocket, open at the back
     rr_xz(ws, ws, board_w+2*clr, board_h+2*clr, glass_r+clr, lip, SD);
+    // bottom: opening for the side-angle USB-C plug and its cable (hidden inside the foot)
+    translate([gx+chan_x0, lip+chan_y, -1]) cube([chan_x1-chan_x0, SD, gz+1.5]);
     // right side: PWR + BOOT caps, RESET pinhole, microSD
     for (zz = [pwr_z, boot_z]) translate([SW-ws-1, lip+btn_d, gz+zz]) rotate([0, 90, 0]) cylinder(d = 3.6, h = ws+2);
     translate([SW-ws-1, lip+btn_d, gz+rst_z]) rotate([0, 90, 0]) cylinder(d = 1.6, h = ws+2, $fn = 16);
@@ -108,7 +117,8 @@ module cover() {
       translate([0, 0, 1+cover_t-1.3]) cylinder(d1 = 2.4, d2 = 4.4, h = 1.31);   // countersink
     }
     // cable exit for the 90° USB-C plug and the battery lead (sits inside the foot)
-    translate([usb_x+clr-0.1-9, -1, -1]) cube([18, 12, cover_t+2]);
+    // wide enough for the side-angle plug either way round; stays clear of the screw pads
+    translate([14, -1, -1]) cube([33, 9, cover_t+2]);
     // pry notch
     translate([cw/2-5, ch-1.2, -1]) cube([10, 2, 1.8]);
   }
@@ -134,8 +144,10 @@ module foot() {
     translate([0, 0, -0.01]) linear_extrude(plate_t) offset(-1.6) rr2(FW, FD, SR+fm);
     // screw pilots for the plate
     for (p = plate_screws()) translate([p[0], p[1], -1]) cylinder(d = 1.7, h = plate_t+8, $fn = 16);
-    // back: USB-C panel socket (left) + speaker grille (right)
-    translate([FW*0.3-6.5, FD-4, plate_t+2.5]) cube([13, 6, 6.5]);
+    // pocket under the slab for the USB-C plug; it opens into the battery bay
+    slab_placed() translate([gx+chan_x0-0.5, lip+chan_y-0.5, -chan_drop]) cube([chan_x1-chan_x0+1, SD-chan_y+3, chan_drop+1]);
+    // back: cable slot, open at the bottom so the cable can be laid in before the plate goes on
+    translate([FW*0.3-3.5, FD-5, -1]) cube([7, 7, plate_t+9]);
     for (i = [0:5], j = [0:2]) translate([FW*0.62 + i*3.2, FD-4, plate_t+3.5 + j*3.2]) rotate([-90, 0, 0]) cylinder(d = 1.8, h = 6, $fn = 12);
   }
 }
@@ -204,6 +216,24 @@ if (part == "cover")   cover();
 if (part == "foot")    foot();
 if (part == "plate")   plate();
 if (part == "buttons") buttons();
+// fit check: side-angle plug (18 x 13 x 7 mm body) + 4 mm cable, flip = cable to the left
+module plug_dummy(flip = false) {
+  bx = flip ? usb_x - (44.5 - 30.35) : usb_x - (30.35 - 26.7);
+  translate([gx + bx, lip + 5.9, gz - 6.7]) cube([17.8, 6.6, 13]);                  // plug body
+  cx = flip ? gx + bx - 6 : gx + bx + 17.8;                                          // cable leaves the side
+  translate([cx, lip + 9.2 - 2, gz - 3.6]) cube([6, 4, 4]);                          // short horizontal run
+  translate([flip ? cx : cx + 2, lip + 7.2, gz - 3.6 - 8]) cube([4, 4, 8.5]);        // then down into the foot
+}
+// fit check: anything left in these parts means the plug collides (empty = fits)
+if (part == "fit_shell_r") intersection() { shell(); plug_dummy(false); }
+if (part == "fit_shell_l") intersection() { shell(); plug_dummy(true); }
+if (part == "fit_foot_r")  intersection() { foot(); slab_placed() plug_dummy(false); }
+if (part == "fit_foot_l")  intersection() { foot(); slab_placed() plug_dummy(true); }
+if (part == "fit_cover")   intersection() { translate([ws+0.1, SD - cover_t, ws+0.1]) rotate([90, 0, 0]) mirror([0, 0, 1]) cover(); union() { plug_dummy(false); plug_dummy(true); } }
+if (part == "cutaway") {   // right half removed to show the plug path
+  difference() { union() { color(foot_c) foot(); slab_placed() { color(ink) shell(); } } translate([FW/2, -50, -50]) cube([200, 200, 300]); }
+  slab_placed() color(tomato) plug_dummy(false);
+}
 if (part == "assembly") { color(foot_c) foot(); slab_placed() slab_assembly(); }
 if (part == "exploded") {
   color(foot_c) foot(); color(c2(foot_shade)) translate([0, 0, -25]) plate();
